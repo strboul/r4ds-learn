@@ -2,7 +2,7 @@
 title: "ggplot2 and visualization"
 subtitle: "_set of notebooks for learning R and tidyverse_"
 output:
-  github_document:
+  html_document:
     toc: true
 ---
 
