@@ -1,0 +1,183 @@
+---
+title: "ggplot2 and visualization"
+subtitle: "_set of notebooks for learning R and tidyverse_"
+output:
+  github_document:
+    toc: true
+---
+
+Include the tidyverse package always:
+```{r library, eval=FALSE}
+library(tidyverse)
+```
+
+mpg is a data frame tibble from ggplot2 where variables in the columns and observations are in the rows
+displ: car engine size in liters
+hwy: car fuel effiency on highway
+
+```{r mpg}
+ggplot2::mpg
+```
+
+### Creating a ggplot
+
+The plot shows a negative relationship btw displ and hwy (cars w/big engines use more fuel).
+```{r, eval=TRUE}
+library(ggplot2) #Repeat it for the first time in a .Rmd document to get knitr worked
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy))
+```
+
+On that matter, a general template for `ggplot2::ggplot` function is;
+> ggplot(data = <DATA>) +
+>   <GEOM_FUNCTION>(mapping = aes(<MAPPINGS>))
+
+### Aesthetic Mappings
+Mapping _aesthetic_: a third var. like __size__, __shape__, __color__.
+```{r, eval=TRUE}
+head(factor(mpg$class))
+```
+
+You can map the colors of your points to the `class` variable to reveal the __class__ of each car.
+Assigning a unique level of the aesthetic (the example below is color) to each unique value of the variable is known as _scaling_. ggplot2 adds legend automatically.
+```{r, eval=TRUE}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, color = class))
+```
+
+Below is those which year > 2000 brings (the boolean operator)
+```{r, eval=TRUE}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, color = year > 2000))
+```
+
+Mapping `class` to _alpha_ aesthetic which can control the transparency or shape of the points
+```{r, eval=TRUE}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, alpha = class))
+```
+
+Shape scaling (with max 6 discrete values in the variable) and six shapes. __Additional groups will be unplotted when you use this aesthetic.__
+```{r, eval=TRUE}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, shape = class))
+```
+
+Using and choosing color in aesthetic properties. ggplot2 does not create a legend  for x and y aesthetics but it creates axis line with tick marks and a label (as others).
+```{r, eval=TRUE}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy), color = "red")
+```
+
+### Facets
+Facets are _particularly_ useful for __categorical variables__. It splits your plot into _facets_, subplots that each display one subset of the data. Use `facet_wrap` function.
+```{r, eval=TRUE}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_wrap(~ manufacturer, nrow = 2)
+```
+To facet your plot on the combination of two variables, use `facet_grid()` to facet your plot, followed by a ~ .
+```{r, eval=TRUE}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_grid(drv ~ cyl)
+```
+
+If you don't facet in rows and columns dim., use `.` .
+```{r, eval=TRUE}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_grid(drv ~ .)
+```
+
+### Geometric Objects
+
+_geom_ is the geometrical object which a plot use to represent data. Describing the plots by the type of geom that the plot uses is possible;
+i.e. bar chart > bar geoms, line charts > line geoms, boxplot > boxplot geom.
+Exception: Scatterplots use the point geom.
+
+Changing `geom` function affects the visuality (and representation) of plot. From geom_point to _smooth : see the difference below 2 graphs:
+```{r, eval=TRUE}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy))
+```
+
+```{r, eval=TRUE}
+ggplot(data = mpg) +
+  geom_smooth(mapping = aes(x = displ, y = hwy))
+```
+
+You can set shape of a point, but not set a shape of line. But, you could set the linetype of a line. `geom_smooth()` draws a different line, with a different linetype, for each unique value of the variable that you map to linetype:
+```{r, eval=TRUE}
+ggplot(data = mpg) +
+  geom_smooth(mapping = aes(x = displ, y = hwy, linetype = drv))
+```
+
+Displaying multiple geoms in the same plot - add multiple geom func. to `ggplot()`. Below has both `geom_point()` and `geom_smooth()` You don't have to define mappings for both functions, ggplot2 will treat these mappings as global mappings that apply to each geom in the graph.
+```{r, eval=TRUE}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) +
+  geom_point() +
+  geom_smooth()
+```
+
+However, if you place mappings in geom function, ggplot2 will treat them as local mappings _for that layer only_. This makes it possible to display different aesthetics in different layers.
+
+```{r, eval=TRUE}
+#Changing mappings on a single layer
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) +
+  geom_point(mapping = aes(color=class)) +
+  geom_smooth()
+```
+
+> Clarification (for myself):
+> The difference btw adding color to ggplot line and geompoint line. Creating different graphs. The variables added to ggplot line are fundementals for the graph, every geom must interact with it. However, the variables added to geoms in the following layers are just responsible on that layer features.
+
+### Statistical Transformations and Position Adjustments
+
+For instance, bar chart uses the function of `geom_bar()`.
+
+You can color a bar chart using either the `color` aesthetic, or more usefully `fill`. Color makes the borders colorful whereas fill makes inside.
+```{r, eval=TRUE}
+ggplot(data=diamonds)+
+  geom_bar(mapping=aes(x=cut, color=cut))
+ggplot(data=diamonds)+
+  geom_bar(mapping=aes(x=cut, fill=cut))
+```
+
+If you map the `fill` aesthetic to another variable, like `clarity`: the bars are automatically stacked. Below, each colored rectangle represents a combination of `cut` and `clarity`:
+```{r, eval=TRUE}
+ggplot(data=diamonds)+
+  geom_bar(mapping=aes(x=cut, fill=clarity))
+```
+
+The stacking is performed _automatically_ by the position adjustment specified by the `position` argument. If you don't want stacked bar, use one of them: `"identity"`, `"dodge"` or `"fill"`
+
++ `position = "identity"` isn't very useful for bars as it overlaps. To see that overlapping we either need to make the bars slightly transparent by setting `alpha` to a small value, or completely transparent by `fill = NA` This is more useful for 2D geoms. See the example below.
+```{r, eval=TRUE}
+ggplot(
+  data=diamonds,
+  mapping=aes(x=cut, fill=clarity))+
+  geom_bar(alpha=1/5, position="identity")
+ggplot(
+  data=diamonds,
+  mapping=aes(x=cut, color=clarity))+
+  geom_bar(fill=NA, position="identity")
+```
+
++ `position = "fill"` works like stacking but makes stacked bars at the "same height". This makes easier to compare proportions across groups.
+```{r, eval=TRUE}
+ggplot(data=diamonds)+
+  geom_bar(
+  mapping=aes(x=cut, fill=clarity),
+  position="fill"
+)
+```
+
++ `position = "dodge"` places objects _beside_ one another. This makes easier to compare individual values.
+```{r, eval=TRUE}
+ggplot(data=diamonds)+
+  geom_bar(
+  mapping=aes(x=cut, fill=clarity),
+  position="dodge"
+)
+```
